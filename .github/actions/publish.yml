@@ -1,0 +1,51 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: typst-community/setup-typst@v4
+        with:
+          typst-version: ^0.14.0
+
+      - name: Create output directory
+        run: mkdir build
+
+      - name: Compile document
+        run: typst compile radio.typ build/radio.pdf
+
+      - name: Upload site files as artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build
+
+  # See https://github.com/actions/deploy-pages
+  deploy:
+    needs: build
+
+    permissions:
+      pages: write
+      id-token: write
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
